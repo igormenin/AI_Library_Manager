@@ -18,22 +18,7 @@ export class GlobalStorage {
       fs.mkdirSync(this.storageUri.fsPath, { recursive: true });
     }
     if (!fs.existsSync(this.filePath)) {
-      // Default initial libraries, e.g., ag-kit
-      const initialLibs: Library[] = [
-        {
-          id: "ag-kit",
-          name: "Antigravity Kit",
-          description: "Conjunto de agentes e templates para programação agentiva no Claude Code / Antigravity IDE.",
-          github: "vudovn/ag-kit",
-          npmPackage: "@vudovn/ag-kit",
-          commands: {
-            init: "npx @vudovn/ag-kit init",
-            global: "npm install -g @vudovn/ag-kit"
-          },
-          currentVersion: "1.0.0",
-          lastChecked: new Date().toISOString()
-        }
-      ];
+      const initialLibs: Library[] = [];
       fs.writeFileSync(this.filePath, JSON.stringify(initialLibs, null, 2), 'utf8');
     }
   }
