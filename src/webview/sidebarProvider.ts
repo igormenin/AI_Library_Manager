@@ -852,6 +852,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     function restoreGist() {
       vscode.postMessage({ type: 'restore' });
     }
+
+    // Request initial data once the webview script is fully loaded
+    vscode.postMessage({ type: 'getLibraries' });
   </script>
 </body>
 </html>`;
