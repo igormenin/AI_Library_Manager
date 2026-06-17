@@ -51,6 +51,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             cancellable: false
           }, async () => {
             const updates = await UpdateChecker.checkProjectUpdates(this._globalStorage);
+            this.sendLibrariesData();
             webviewView.webview.postMessage({ type: 'updateStatus', updates });
           });
           break;

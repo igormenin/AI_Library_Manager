@@ -24,7 +24,7 @@ export class UpdateChecker {
       const lib = globalLibs.find(l => l.id === pkg.id);
       if (!lib) { continue; }
 
-      let latestVersion = pkg.installedVersion;
+      let latestVersion = '';
       try {
         if (lib.npmPackage) {
           latestVersion = await NpmService.getLatestVersion(lib.npmPackage);
@@ -33,6 +33,14 @@ export class UpdateChecker {
         }
       } catch (err) {
         console.error(`Failed to check updates for ${pkg.id}:`, err);
+      }
+
+      if (!latestVersion) {
+        latestVersion = pkg.installedVersion;
+      } else if (latestVersion !== lib.currentVersion) {
+        lib.currentVersion = latestVersion;
+        lib.lastChecked = new Date().toISOString();
+        globalStorage.addLibrary(lib);
       }
 
       const hasUpdate = this.isNewerVersion(pkg.installedVersion, latestVersion);

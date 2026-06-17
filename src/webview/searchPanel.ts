@@ -620,6 +620,10 @@ export class SearchPanel {
         <input type="text" id="libNpm">
       </div>
       <div class="form-group">
+        <label>Versão</label>
+        <input type="text" id="libVersion" placeholder="Ex: 1.0.0">
+      </div>
+      <div class="form-group">
         <label>Comando de Instalação Local (Init)</label>
         <input type="text" id="libCmdInit">
       </div>
@@ -775,7 +779,7 @@ export class SearchPanel {
             \${keywordsHtml}
             \${linksHtml}
             <div class="card-footer" style="margin-top:auto; width:100%;">
-              <button class="card-btn" onclick="openAddModal('\${escapeHtml(pkg.name)}', '\${escapeHtml(pkg.description || "")}')">Adicionar à Lista</button>
+              <button class="card-btn" onclick="openAddModal('\${escapeHtml(pkg.name)}', '\${escapeHtml(pkg.description || "")}', '\${escapeHtml(pkg.version)}')">Adicionar à Lista</button>
             </div>
           </div>
         \`;
@@ -793,11 +797,12 @@ export class SearchPanel {
       nextBtn.disabled = results.length < pageSize;
     }
 
-    function openAddModal(name, description) {
+    function openAddModal(name, description, version) {
       document.getElementById('libId').value = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       document.getElementById('libName').value = name;
       document.getElementById('libDesc').value = description;
       document.getElementById('libNpm').value = name;
+      document.getElementById('libVersion').value = version || '1.0.0';
       document.getElementById('libCmdInit').value = 'npx ' + name + ' init';
       document.getElementById('libCmdGlobal').value = 'npm install -g ' + name;
       
@@ -812,6 +817,7 @@ export class SearchPanel {
       const name = document.getElementById('libName').value;
       const desc = document.getElementById('libDesc').value;
       const initCmd = document.getElementById('libCmdInit').value;
+      const version = document.getElementById('libVersion').value || '1.0.0';
 
       if (!name || !desc || !initCmd) {
         alert('Nome, Descrição e Comando Init são campos obrigatórios.');
@@ -829,7 +835,7 @@ export class SearchPanel {
           init: initCmd,
           global: document.getElementById('libCmdGlobal').value || undefined
         },
-        currentVersion: '1.0.0'
+        currentVersion: version
       };
 
       vscode.postMessage({ type: 'addLibrary', library });
