@@ -177,6 +177,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         gistId: config.get<string>('gistId') || ''
       }
     });
+
+    if (UpdateChecker.lastCheckedUpdates.length > 0) {
+      this._view.webview.postMessage({
+        type: 'updateStatus',
+        updates: UpdateChecker.lastCheckedUpdates
+      });
+    }
   }
 
   private _getHtmlForWebview(webview: vscode.WebviewView['webview']) {
@@ -290,6 +297,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
     }
 
+    .lib-card.installed {
+      border-color: var(--vscode-charts-green, #22c55e);
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.08);
+    }
+
+    .lib-card.installed:hover {
+      border-color: #4ade80;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+    }
+
     .lib-header {
       display: flex;
       justify-content: space-between;
@@ -309,6 +326,19 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       padding: 2px 6px;
       border-radius: 10px;
       color: var(--text-muted);
+    }
+
+    .lib-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+
+    .lib-meta-buttons {
+      display: flex;
+      gap: 6px;
     }
 
     .lib-desc {
@@ -430,6 +460,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     
     .danger-btn:hover {
       background: #dc2626 !important;
+    }
+
+    .warning-btn {
+      background: var(--vscode-notificationsWarningIcon-foreground, #f59e0b) !important;
+      color: #ffffff !important;
+    }
+    
+    .warning-btn:hover {
+      background: #fbbf24 !important;
+      opacity: 1 !important;
     }
 
     .search-box {
@@ -632,27 +672,62 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         return;
       }
 
-      currentLibraries.forEach(lib => {
+      // Sort libraries so that installed ones are rendered first
+      const sortedLibraries = [...currentLibraries].sort((a, b) => {
+        const aInstalled = projectPackages.some(p => p.id === a.id) ? 1 : 0;
+        const bInstalled = projectPackages.some(p => p.id === b.id) ? 1 : 0;
+        return bInstalled - aInstalled;
+      });
+
+      sortedLibraries.forEach(lib => {
         const installedPkg = projectPackages.find(p => p.id === lib.id);
         const update = updateStatus[lib.id];
         const isExpanded = expandedLibs.has(lib.id);
         const detailsClass = isExpanded ? 'lib-details show' : 'lib-details';
 
         const card = document.createElement('div');
-        card.className = 'lib-card';
+        card.className = installedPkg ? 'lib-card installed' : 'lib-card';
 
         let badgesHtml = '';
+        let updateIconHtml = '';
         if (installedPkg) {
           if (update && update.hasUpdate) {
             badgesHtml += \`<span class="status-badge update">Upgrade: \${installedPkg.installedVersion} ➔ \${update.latestVersion}</span>\`;
+            updateIconHtml = \`
+              <span class="update-pulse-icon" title="Atualização disponível!" style="margin-left: 6px; display: inline-flex; align-items: center; vertical-align: middle; color: #facc15; animation: pulse 2s infinite;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="16 12 12 8 8 12"></polyline>
+                  <line x1="12" y1="16" x2="12" y2="8"></line>
+                </svg>
+              </span>
+            \`;
           } else {
             badgesHtml += \`<span class="status-badge installed">Instalado (\${installedPkg.scope}: \${installedPkg.installedVersion})</span>\`;
           }
         }
 
+        let localBtnText = 'Instalar Local';
+        let localBtnClass = '';
+        let globalBtnText = 'Instalar Global';
+        let globalBtnClass = 'secondary';
+
+        if (update && update.hasUpdate) {
+          localBtnText = 'Atualizar Local';
+          localBtnClass = 'warning-btn';
+          globalBtnText = 'Atualizar Global';
+          globalBtnClass = 'secondary warning-btn';
+        }
+
         card.innerHTML = \`
           <div class="lib-header" style="cursor: pointer;" onclick="toggleDetails('\${lib.id}')">
-            <span class="lib-name" style="\${lib.npmPackage ? 'text-decoration: underline; color: var(--accent-color);' : ''}" onclick="\${lib.npmPackage ? \`openPackageDetailsInApp('\${escapeHtml(lib.npmPackage)}'); event.stopPropagation();\` : ''}">\${escapeHtml(lib.name)}</span>
+            <span class="lib-name" style="\${lib.npmPackage ? 'text-decoration: underline; color: var(--accent-color);' : ''}" onclick="\${lib.npmPackage ? \`openPackageDetailsInApp('\${escapeHtml(lib.npmPackage)}'); event.stopPropagation();\` : ''}">\${escapeHtml(lib.name)}\${updateIconHtml}</span>
+          </div>
+          <div class="lib-meta-row">
+            <div class="lib-meta-buttons">
+              <button class="secondary" style="padding: 2px 6px; font-size: 10px; height: auto;" onclick="editLibrary('\${lib.id}'); event.stopPropagation();">Editar</button>
+              <button class="secondary danger-btn" style="padding: 2px 6px; font-size: 10px; height: auto;" onclick="deleteLibrary('\${lib.id}'); event.stopPropagation();">Excluir</button>
+            </div>
             <span class="lib-version">v\${lib.currentVersion || '1.0.0'}</span>
           </div>
           <div class="lib-desc" style="cursor: pointer;" onclick="toggleDetails('\${lib.id}')">\${escapeHtml(lib.description)}</div>
@@ -667,10 +742,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           </div>
 
           <div class="lib-actions" style="margin-top: 10px;">
-            <button onclick="installLocal('\${lib.id}')">Instalar Local</button>
-            \${lib.commands.global ? \`<button class="secondary" onclick="installGlobal('\${lib.id}')">Instalar Global</button>\` : ''}
-            <button class="secondary" onclick="editLibrary('\${lib.id}')">Editar</button>
-            <button class="secondary danger-btn" onclick="deleteLibrary('\${lib.id}')" style="margin-left:auto;">Excluir</button>
+            <button class="\${localBtnClass}" onclick="installLocal('\${lib.id}')">\${localBtnText}</button>
+            \${lib.commands.global ? \`<button class="\${globalBtnClass}" onclick="installGlobal('\${lib.id}')">\${globalBtnText}</button>\` : ''}
           </div>
         \`;
         container.appendChild(card);

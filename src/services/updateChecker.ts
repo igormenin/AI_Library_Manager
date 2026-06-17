@@ -13,6 +13,8 @@ export interface UpdateInfo {
 }
 
 export class UpdateChecker {
+  public static lastCheckedUpdates: UpdateInfo[] = [];
+
   public static async checkProjectUpdates(globalStorage: GlobalStorage): Promise<UpdateInfo[]> {
     const projectConfig = ProjectStorage.getProjectConfig();
     const globalLibs = globalStorage.getLibraries();
@@ -57,6 +59,7 @@ export class UpdateChecker {
       });
     }
 
+    this.lastCheckedUpdates = updates;
     return updates;
   }
 

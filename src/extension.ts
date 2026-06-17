@@ -45,7 +45,9 @@ export function activate(context: vscode.ExtensionContext) {
   if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
     // Run update checker with a slight delay so editor is fully loaded
     setTimeout(() => {
-      UpdateChecker.checkProjectUpdates(globalStorage).catch(err => {
+      UpdateChecker.checkProjectUpdates(globalStorage).then(() => {
+        sidebarProvider.sendLibrariesData();
+      }).catch(err => {
         console.error('Error during auto-update check:', err);
       });
     }, 3000);
@@ -54,7 +56,9 @@ export function activate(context: vscode.ExtensionContext) {
   // Trigger update check when workspace folder changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      UpdateChecker.checkProjectUpdates(globalStorage).catch(err => {
+      UpdateChecker.checkProjectUpdates(globalStorage).then(() => {
+        sidebarProvider.sendLibrariesData();
+      }).catch(err => {
         console.error('Error during workspace folder change update check:', err);
       });
     })
