@@ -5,6 +5,7 @@
   "version": "1.0.0",
   "publisher": "igormenin",
   "license": "MIT",
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/igormenin/AI_Library_Manager.git"
