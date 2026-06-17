@@ -64,9 +64,25 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case 'deleteLibrary': {
-          this._globalStorage.removeLibrary(data.id);
-          this.sendLibrariesData();
-          vscode.window.showInformationMessage('Biblioteca removida com sucesso.');
+          const libs = this._globalStorage.getLibraries();
+          const lib = libs.find(l => l.id === data.id);
+          const libName = lib ? lib.name : 'esta biblioteca';
+
+          vscode.window.showWarningMessage(
+            `Tem certeza de que deseja remover a biblioteca "${libName}"?`,
+            { modal: true },
+            'Sim, Remover'
+          ).then(selection => {
+            if (selection === 'Sim, Remover') {
+              this._globalStorage.removeLibrary(data.id);
+              this.sendLibrariesData();
+              vscode.window.showInformationMessage('Biblioteca removida com sucesso.');
+            }
+          });
+          break;
+        }
+        case 'showError': {
+          vscode.window.showErrorMessage(data.message);
           break;
         }
         case 'backup': {
@@ -791,12 +807,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       const action = document.getElementById('gistPendingAction').value;
 
       if (!token) {
-        alert('Por favor insira o token ghp_...');
+        vscode.postMessage({ type: 'showError', message: 'Por favor insira o token ghp_...' });
         return;
       }
 
       if (action === 'restore' && !gistId) {
-        alert('Por favor insira o ID do Gist para poder realizar a restauração.');
+        vscode.postMessage({ type: 'showError', message: 'Por favor insira o ID do Gist para poder realizar a restauração.' });
         return;
       }
 
@@ -854,7 +870,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       const initCmd = document.getElementById('libCmdInit').value;
 
       if (!name || !desc || !initCmd) {
-        alert('Por favor preencha os campos obrigatórios (Nome, Descrição e Comando Init).');
+        vscode.postMessage({ type: 'showError', message: 'Por favor preencha os campos obrigatórios (Nome, Descrição e Comando Init).' });
         return;
       }
 
@@ -894,9 +910,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     function deleteLibrary(id) {
-      if (confirm('Tem certeza de que deseja remover esta biblioteca?')) {
-        vscode.postMessage({ type: 'deleteLibrary', id });
-      }
+      vscode.postMessage({ type: 'deleteLibrary', id });
     }
 
     function installLocal(id) {

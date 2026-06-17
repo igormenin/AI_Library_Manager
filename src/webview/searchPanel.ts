@@ -95,6 +95,10 @@ export class SearchPanel {
             vscode.window.showInformationMessage(`Biblioteca "${newLib.name}" adicionada com sucesso!`);
             break;
           }
+          case 'showError': {
+            vscode.window.showErrorMessage(message.message);
+            break;
+          }
           case 'getPackageDetails': {
             logDebug(`Extension searchPanel: Received getPackageDetails for: ${message.packageName}`);
             try {
@@ -820,7 +824,7 @@ export class SearchPanel {
       const version = document.getElementById('libVersion').value || '1.0.0';
 
       if (!name || !desc || !initCmd) {
-        alert('Nome, Descrição e Comando Init são campos obrigatórios.');
+        vscode.postMessage({ type: 'showError', message: 'Nome, Descrição e Comando Init são campos obrigatórios.' });
         return;
       }
 

@@ -22,14 +22,21 @@ export class UpdateChecker {
 
     for (const pkg of projectConfig.installedPackages) {
       const lib = globalLibs.find(l => l.id === pkg.id);
-      if (!lib) { continue; }
+      if (!lib) {
+        console.log(`UpdateChecker: Library not found in globalStorage for pkg.id = ${pkg.id}`);
+        continue;
+      }
+
+      console.log(`UpdateChecker: Processing ${pkg.id} | Catalog version: ${lib.currentVersion} | Installed version: ${pkg.installedVersion}`);
 
       let latestVersion = '';
       try {
         if (lib.npmPackage) {
           latestVersion = await NpmService.getLatestVersion(lib.npmPackage);
+          console.log(`UpdateChecker: Fetched NPM version ${latestVersion} for ${lib.npmPackage}`);
         } else if (lib.github) {
           latestVersion = await GitHubService.getLatestVersion(lib.github);
+          console.log(`UpdateChecker: Fetched GitHub version ${latestVersion} for ${lib.github}`);
         }
       } catch (err) {
         console.error(`Failed to check updates for ${pkg.id}:`, err);
@@ -37,10 +44,20 @@ export class UpdateChecker {
 
       if (!latestVersion) {
         latestVersion = pkg.installedVersion;
-      } else if (latestVersion !== lib.currentVersion) {
-        lib.currentVersion = latestVersion;
+        console.log(`UpdateChecker: No latestVersion fetched, falling back to installedVersion = ${latestVersion}`);
+      } else {
+        // Update the lastChecked timestamp on every successful registry query
         lib.lastChecked = new Date().toISOString();
+        
+        if (latestVersion !== lib.currentVersion) {
+          console.log(`UpdateChecker: Updating globalStorage catalog version for ${pkg.id} from ${lib.currentVersion} to ${latestVersion}`);
+          lib.currentVersion = latestVersion;
+        } else {
+          console.log(`UpdateChecker: No version update needed for ${pkg.id} (latestVersion matches catalog version).`);
+        }
+        
         globalStorage.addLibrary(lib);
+        console.log(`UpdateChecker: Saved updated library to globalStorage successfully.`);
       }
 
       const hasUpdate = this.isNewerVersion(pkg.installedVersion, latestVersion);
