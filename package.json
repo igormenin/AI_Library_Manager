@@ -3,7 +3,7 @@
   "displayName": "AI Library Manager",
   "description": "Busque, salve, instale e gerencie bibliotecas de IA com atualizações automáticas e sincronização via GitHub Gist.",
   "version": "1.0.0",
-  "publisher": "antigravity",
+  "publisher": "igormenin",
   "license": "MIT",
   "repository": {
     "type": "git",
