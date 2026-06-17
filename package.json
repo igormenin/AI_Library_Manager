@@ -1,0 +1,65 @@
+{
+  "name": "ai-library-manager",
+  "displayName": "AI Library Manager",
+  "description": "Busque, salve, instale e gerencie bibliotecas de IA com atualizações automáticas e sincronização via GitHub Gist.",
+  "version": "1.0.0",
+  "publisher": "antigravity",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-library-manager-sidebar",
+          "title": "AI Libraries",
+          "icon": "media/robot.svg"
+        }
+      ]
+    },
+    "views": {
+      "ai-library-manager-sidebar": [
+        {
+          "id": "ai-library-manager-sidebar-view",
+          "type": "webview",
+          "name": "AI Tools & Libraries"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AI Library Manager",
+      "properties": {
+        "aiLibs.githubToken": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub Personal Access Token (PAT) com permissão 'gist' para backup e restore."
+        },
+        "aiLibs.gistId": {
+          "type": "string",
+          "default": "",
+          "description": "ID do Gist utilizado para sincronizar a lista de bibliotecas de IA."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify",
+    "watch-esbuild": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "@types/vscode": "^1.75.0",
+    "esbuild": "^0.17.11",
+    "typescript": "^4.9.5"
+  }
+}
