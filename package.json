@@ -2,7 +2,7 @@
   "name": "ai-library-manager",
   "displayName": "AI Library Manager",
   "description": "Busque, salve, instale e gerencie bibliotecas de IA com atualizações automáticas e sincronização via GitHub Gist.",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "publisher": "igormenin",
   "license": "MIT",
   "icon": "media/icon.png",
